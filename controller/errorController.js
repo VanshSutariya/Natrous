@@ -18,7 +18,7 @@ const handleValidationErrorDB = (err) => {
   const message = `Invalid input data. ${errors.join('. ')}`;
   return new AppError(message, 400);
 };
-
+const handleJWTErr = (err) => new AppError('Invalid token. login again!', 401);
 const sendErrorDev = (err, res) => {
   res.status(err.statusCode).json({
     status: err.status,
@@ -29,6 +29,11 @@ const sendErrorDev = (err, res) => {
 };
 
 const sendErrorProd = (err, res) => {
+  res.status(err.statusCode).json({
+    status: err.status,
+    message: err.message,
+  });
+  /*
   // Operational, trusted error: send message to client
   if (err.isOperational) {
     res.status(err.statusCode).json({
@@ -47,6 +52,7 @@ const sendErrorProd = (err, res) => {
       message: 'Something went very wrong!',
     });
   }
+  */
 };
 
 module.exports = (err, req, res, next) => {
@@ -64,6 +70,7 @@ module.exports = (err, req, res, next) => {
     if (error.code === 11000) error = handleDuplicateFieldsDB(error);
     if (error.name === 'ValidationError')
       error = handleValidationErrorDB(error);
+    if (error.name === 'JsonWebTokenError') error = handleJWTErr(error);
 
     sendErrorProd(error, res);
   }
